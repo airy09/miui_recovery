@@ -1,0 +1,41 @@
+ENG README:
+
+hold the miui recovery source code
+modify by Gaojiquan LaoYang
+port recovery binary to c++
+now can build on CM10.1 source code
+
+if you need to use the device info from the 'recovery menu'
+you should add the line to Boardconfig.mk
+
+```bash
+MIUI_DEVICE_CONF := ../../../device/ZTE/N909/device.conf
+MIUI_INIT_CONF := ../../../device/ZTE/N909/init.conf
+```
+
+you should add the below line to init.rc
+
+```bash
+export LD_LIBRARY_PATH .:/sbin/
+```
+
+zh-CN README
+
+这里是托管 MIUI RECOVERY源代码的地方
+ 由[搞机圈论坛](http://www.gaojiquan.com) 老杨进行修改
+源代码已经从C语言修改成C++
+修改为动态库编译，所以需要在init.rc文件中添加下面的定义
+export LD_LIBRARY_PATH .:/sbin
+
+现在可以在CM10.1的源代码下面进行编译
+为了初始化机型的信息，你需要用来两个文件device.conf,init.conf
+都需要放置到/device目录下面对应的机型文件夹里面，我用的是中兴的N909
+你需要参考bootable/recovery/utilities/device.conf , bootable/recovery/utilities/init.conf两个文件
+修改好后，把生成的两个文件，放置到device目录下面，特定的机型目录里面，
+我的位置是device/ZTE/N909
+最后要修改一下BoardConfig.mk
+添加如下的内容:
+MIUI_DEVICE_CONF := ../../../device/ZTE/N909/device.conf
+MIUI_INIT_CONF := ../../../device/ZTE/N909/init.conf
+
+
