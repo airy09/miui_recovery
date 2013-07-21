@@ -47,6 +47,7 @@
 //INTENT_RUN_ORS ,1, filename
 //
 #define AUTHOR_INFO "/tmp/author_info.log"
+
 static STATUS root_device_item_show(menuUnit *p) {
 	if(RET_YES == miui_confirm(3, p->name, p->desc, p->icon)) {
 		miui_busy_process();
@@ -99,6 +100,10 @@ static STATUS brightness_menu_show(struct _menuUnit* p) {
 	}
 	return MENU_BACK;
 }
+
+
+
+
 /* 
  *  _sd_show_dir show file system on screen 
  *  return MENU_BACK when press backmenu
@@ -154,7 +159,7 @@ static STATUS about_author_menu_show(menuUnit* p) {
 	 FILE* fp;
          char author_info[4084];
 	 char file_name[PATH_MAX];
-	 snprintf(author_info, 4084, "\n由搞机圈老杨制作\n编译日期: %s\n微博名称: laser杨万荣\n微博地址:http://weibo.com/210124187\n",acfg()->rom_date);
+	 snprintf(author_info, 4084, "\nModify by Gaojiquan.com LaoYang\nBuild Date: %s\nSina Weibo: http://weibo.com/210124187\n",acfg()->rom_date);
 	 fp = fopen(AUTHOR_INFO, "w+");
 	 if (fp != NULL) {
 		 fputs(author_info, fp);
@@ -171,20 +176,20 @@ static STATUS about_author_menu_show(menuUnit* p) {
 struct _menuUnit* ors_ui_init() {
 	struct _menuUnit* p = common_ui_init();
 	return_null_if_fail(p != NULL);
-	menuUnit_set_name(p, "运行ORS脚本");
-	menuUnit_set_title(p, "运行ORS脚本");
+	menuUnit_set_name(p, "<~root.ors>");
+	menuUnit_set_title(p, "run ORS script");
 	menuUnit_set_icon(p, "@root");
 	assert_if_fail(menuNode_init(p) != NULL);
 	//select ORS from sd card 
 	struct _menuUnit* temp = common_ui_init();
-	menuUnit_set_name(temp, "从SD卡选择ORS脚本");
+	menuUnit_set_name(temp, "<~root.choose.sd.ors>");
 	menuUnit_set_show(temp, &ors_sd_menu_show);
 	assert_if_fail(menuNode_add(p, temp) == RET_OK);
 	
 	//select ORS from external_sd
 	if (acfg()->sd_ext == 1) {
 	temp = common_ui_init();
-	menuUnit_set_name(temp, "从内置卡选择ORS脚本");
+	menuUnit_set_name(temp, "<~root.choose.sdin.ors>");
 	menuUnit_set_show(temp, &ors_sdext_menu_show);
 	assert_if_fail(menuNode_add(p, temp) == RET_OK);
 	}
@@ -194,20 +199,18 @@ struct _menuUnit* ors_ui_init() {
 }
 
 
-
-
 struct _menuUnit* brightness_ui_init() {
 	struct _menuUnit* p = common_ui_init();
 	return_null_if_fail(p != NULL);
-	menuUnit_set_name(p, "调节亮度");
-	menuUnit_set_title(p, "调节亮度");
+	menuUnit_set_name(p, "<~root.set.brightness>");
+	menuUnit_set_title(p, "Set Brightness");
 	menuUnit_set_icon(p, "@root");
 	assert_if_fail(menuNode_init(p) != NULL);
 	//0% brightness
 	struct _menuUnit* temp = common_ui_init();
 	menuUnit_set_name(temp, "0% Brightness");
 	menuUnit_set_show(temp, &brightness_menu_show);
-	temp->show = 10;
+	temp->result = 0;
 	assert_if_fail(menuNode_add(p, temp) == RET_OK);
 	//15% brightness 
 	temp = common_ui_init();
@@ -254,7 +257,7 @@ struct _menuUnit* root_ui_init() {
 	//show info of the author 
 	struct _menuUnit *tmp = common_ui_init();
 	return_null_if_fail(tmp != NULL);
-	strncpy(tmp->name, "关于作者",MENU_LEN);
+	strncpy(tmp->name, "<~root.about.author>",MENU_LEN);
 	menuUnit_set_icon(tmp, "@info");
         menuUnit_set_show(tmp, &about_author_menu_show);
 	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
@@ -280,7 +283,7 @@ struct _menuUnit* root_ui_init() {
 	//Free the sdcard space 
 	tmp = common_ui_init();
 	return_null_if_fail(tmp != NULL);
-	strncpy(tmp->name, "Free sd space for backup", MENU_LEN);
+	strncpy(tmp->name, "<~root.free.sd.space>", MENU_LEN);
 	menuUnit_set_icon(tmp,"@root");
 	tmp->result = FREE_SDCARD_SPACE;
 	tmp->show = &root_device_item_show;

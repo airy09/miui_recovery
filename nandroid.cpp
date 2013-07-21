@@ -134,10 +134,6 @@ typedef void (*file_event_callback)(const char* filename);
 typedef int (*nandroid_backup_handler)(const char* backup_path, const char* backup_file_image, int callback);
 
 static int mkyaffs2image_wrapper(const char* backup_path, const char* backup_file_image, int callback) {
-   // char backup_file_image_with_extension[PATH_MAX];
-   // sprintf(backup_file_image_with_extension, "%s.img", backup_file_image);
-   // gettimeofday(&lastupdate,NULL);
-   // return mkyaffs2image((char*)backup_path, backup_file_image_with_extension, 0, callback ? yaffs_callback : NULL);
     char tmp[PATH_MAX];
     snprintf(tmp, PATH_MAX, "cd %s ; mkyaffs2image . %s.img ; exit $?", backup_path, backup_file_image);
     FILE *fp = __popen(tmp, "r");
@@ -154,8 +150,28 @@ static int mkyaffs2image_wrapper(const char* backup_path, const char* backup_fil
      return __pclose(fp);
 }
 
-/* backup method of dedupe */
-/* Begin */
+static int tar_compress_wrapper(const char* backup_path, const char* backup_file_image, int callback) {
+    char tmp[PATH_MAX];
+        sprintf(tmp, "cd $(dirname %s) ; touch %s.tar ; (tar cv %s $(basename %s) | split -a 1 -b 1000000000 /proc/self/fd/0 %s.tar.) 2> /proc/self/fd/1 ; exit $?", backup_path, backup_file_image, strcmp(backup_path, "/data") == 0 && is_data_media() ? "--exclude 'media'" : "", backup_path, backup_file_image);
+  
+
+    FILE *fp = __popen(tmp, "r");
+    if (fp == NULL) {
+        ui_print("Unable to execute tar.\n");
+        return -1;
+    }
+
+    while (fgets(tmp, PATH_MAX, fp) != NULL) {
+        tmp[PATH_MAX - 1] = NULL;
+        if (callback)
+            yaffs_callback(tmp);
+    }
+
+    return __pclose(fp);
+}
+
+
+//BACKUP METHOD OF DEDUPE
 void nandroid_dedupe_gc(const char* blob_dir) {
     char backup_dir[PATH_MAX];
     strcpy(backup_dir, blob_dir);
@@ -208,8 +224,46 @@ void nandroid_dedupe_gc(const char* blob_dir) {
 
 /* End of backup method dedupe */
 
+static nandroid_backup_handler default_backup_handler = tar_compress_wrapper;
+static char forced_backup_format[5] = "";
+void nandroid_force_backup_format(const char* fmt) {
+    strcpy(forced_backup_format, fmt);
+}
+
+static void refresh_default_backup_handler() {
+    char fmt[5];
+    if (strlen(forced_backup_format) > 0) {
+        strcpy(fmt, forced_backup_format);
+    }
+    else {
+        ensure_path_mounted("/sdcard");
+        FILE* f = fopen(NANDROID_BACKUP_FORMAT_FILE, "r");
+        if (NULL == f) {
+            default_backup_handler = tar_compress_wrapper;
+            return;
+        }
+        fread(fmt, 1, sizeof(fmt), f);
+        fclose(f);
+    }
+    fmt[3] = NULL;
+    if (0 == strcmp(fmt, "dup"))
+        default_backup_handler = dedupe_compress_wrapper;
+    else
+        default_backup_handler = tar_compress_wrapper;
+}
+
+unsigned nandroid_get_default_backup_format() {
+    refresh_default_backup_handler();
+    if (default_backup_handler == dedupe_compress_wrapper) {
+        return NANDROID_BACKUP_FORMAT_DUP;
+    } else {
+        return NANDROID_BACKUP_FORMAT_TAR;
+    }
+}
+
 static nandroid_backup_handler get_backup_handler(const char *backup_path) {
     Volume *v = volume_for_path(backup_path);
+    refresh_default_backup_handler();
     if (v == NULL) {
         ui_print("Unable to find volume.\n");
         return NULL;
@@ -221,7 +275,7 @@ static nandroid_backup_handler get_backup_handler(const char *backup_path) {
     }
 
     if (strcmp(backup_path, "/data") == 0 && is_data_media()) {
-          return dedupe_compress_wrapper;
+          return default_backup_handler;
     }
 
     // cwr5, we prefer tar for everything except yaffs2
@@ -237,7 +291,7 @@ static nandroid_backup_handler get_backup_handler(const char *backup_path) {
     }
 
    
-      return dedupe_compress_wrapper;
+      return default_backup_handler;
 }
 
 
@@ -355,6 +409,7 @@ int nandroid_advanced_backup(const char* backup_path, const char *root)
 int nandroid_backup(const char* backup_path)
 {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
+    refresh_default_backup_handler();
     
     if (ensure_path_mounted(backup_path) != 0) {
         return print_and_error("Can't mount backup path.\n");
@@ -482,6 +537,25 @@ static int unyaffs_wrapper(const char* backup_file_image, const char* backup_pat
     return __pclose(fp);
 }
 
+static int tar_extract_wrapper(const char* backup_file_image, const char* backup_path, int callback) {
+    char tmp[PATH_MAX];
+        sprintf(tmp, "cd $(dirname %s) ; cat %s* | tar xv ; exit $?", backup_path, backup_file_image);
+
+    FILE *fp = __popen(tmp, "r");
+    if (fp == NULL) {
+        ui_print("Unable to execute tar.\n");
+        return -1;
+    }
+
+    while (fgets(tmp, PATH_MAX, fp) != NULL) {
+        tmp[PATH_MAX - 1] = NULL;
+        if (callback)
+            yaffs_callback(tmp);
+    }
+
+    return __pclose(fp);
+}
+
 /* Restore method of dedupe */
 /* Begin dedupe */
 static int dedupe_extract_wrapper(const char* backup_file_image, const char* backup_path, int callback) {
@@ -526,7 +600,7 @@ static nandroid_restore_handler get_restore_handler(const char *backup_path) {
 
     if (strcmp(backup_path, "/data") == 0 && is_data_media()) {
   
-	  return dedupe_extract_wrapper;
+	  return tar_extract_wrapper;
     }
 
     // cwr 5, we prefer tar for everything unless it is yaffs2
@@ -542,7 +616,7 @@ static nandroid_restore_handler get_restore_handler(const char *backup_path) {
     }
 
    
-      return dedupe_extract_wrapper;
+      return tar_extract_wrapper;
 }
 
 static int nandroid_restore_partition_extended(const char* backup_path, const char* mount_point, int umount_when_finished) {
@@ -573,6 +647,14 @@ static int nandroid_restore_partition_extended(const char* backup_path, const ch
                 restore_handler = unyaffs_wrapper;
                 break;
             }
+
+	    sprintf(tmp, "%s/%s.%s.tar", backup_path, name, filesystem);
+	    if (0 == (ret = stat(tmp, &file_info))) {
+		    backup_filesystem = filesystem;
+		    restore_handler = tar_extract_wrapper;
+		    break;
+	    }
+
             sprintf(tmp, "%s/%s.%s.dup", backup_path, name, filesystem);
            // if (0 == (ret = statfs(tmp, &file_info))) {
 	   if (0 == (ret = stat(tmp, &file_info))) {
@@ -786,3 +868,5 @@ int nandroid_main(int argc, char** argv)
     
     return nandroid_usage();
 }
+
+

@@ -45,6 +45,11 @@ ifeq ($(BOARD_HAS_REMOVABLE_STORAGE), true)
 	LOCAL_CFLAGS += -DBOARD_HAS_REMOVABLE_STORAGE
 endif
 
+ifneq ($(MIUI_RECOVERY_BUILD_DEVICE),)
+	LOCAL_CFLAGS += -D$(MIUI_RECOVERY_BUILD_DEVICE)
+endif
+
+
 
 # This binary is in the recovery ramdisk, which is otherwise a copy of root.
 # It gets copied there in config/Makefile.  LOCAL_MODULE_TAGS suppresses
@@ -64,14 +69,16 @@ LOCAL_STATIC_LIBRARIES += libminzip libunz libmincrypt \
 			  libmkyaffs2image_static \
 			  libunyaffs_static \
 			  libdedupe libselinux \
-			  libedify libcrecovery
+			  libedify libcrecovery \
+			  libcrypto_static libmiui 
+			 
 #LOCAL_STATIC_LIBRARIES += libminzip libunz libmtdutils libmincrypt
-LOCAL_SHARED_LIBRARIES += libext4_utils libz libmtdutils  \
-			  libflashutils libmmcutils \
+LOCAL_SHARED_LIBRARIES +=  libext4_utils libz libmtdutils  \
+			   libflashutils libmmcutils \
 			   libbmlutils  liberase_image \
 			   libdump_image libflash_image \
-			   libmiui libcutils libstdc++ libc libm \
-			   libcrypto libstlport libsparse
+			   libcutils libstdc++ libc libm \
+			   libsparse libstlport
 LOCAL_LDFLAGS := -ldl 
 
 #add static libraries

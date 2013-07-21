@@ -85,5 +85,7 @@ LOCAL_SHARED_LIBRARIES += libc libm libz
 LOCAL_MODULE := libmiui
 LOCAL_MODULE_TAGS := optional
 
-include $(BUILD_SHARED_LIBRARY)
+#include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
+
 

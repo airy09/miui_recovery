@@ -123,3 +123,14 @@ root.title=搞机圈论坛专用工具
 root.device=破解权限
 root.un_of_rec=禁止恢复官方recovery
 
+root.ors=运行ORS脚本
+root.choose.sd.ors=从sd卡选择ORS脚本
+root.choose.sdin.ors=从内置卡安装ORS
+
+root.set.brightness=调节亮度
+
+root.about.author=关于作者
+
+root.free.sd.space=释放sd空间
+
+root.set.backup.format=设置默认的备份格式

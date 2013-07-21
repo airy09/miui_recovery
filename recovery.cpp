@@ -220,6 +220,21 @@ get_args(int *argc, char ***argv) {
     set_bootloader_message(&boot);
 }
 
+void write_string_to_file(const char* filename, const char* string) {
+    ensure_path_mounted(filename);
+    char tmp[PATH_MAX];
+    sprintf(tmp, "mkdir -p $(dirname %s)", filename);
+    __system(tmp);
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        LOGE("Cannot write to %s\n", filename);
+        return;
+    }
+    fprintf(file, "%s", string);
+    fclose(file);
+}
+
+
 static void
 set_sdcard_update_bootloader_message() {
     struct bootloader_message boot;
@@ -498,6 +513,28 @@ static intentResult* intent_run_ors(int argc, char *argv[]) {
 		return miuiIntent_result_set(0, NULL);
 }
 
+//INTENT_BACKUP_FORMAT DUP | TAR
+static intentResult* intent_backup_format(int argc, char *argv[]) {
+	return_intent_result_if_fail(argc == 1);
+	finish_recovery(NULL);
+	if (strncmp(argv[0], "dup", 3) == 0) {
+		write_string_to_file(NANDROID_BACKUP_FORMAT_FILE,"dup");
+		printf("Set backup format to dup\n");
+	} else if (strncmp(argv[0], "tar",3) == 0) {
+		write_string_to_file(NANDROID_BACKUP_FORMAT_FILE,"tar");
+		printf("Set backup format to tar\n");
+	} else {
+		// nothing
+	}
+	return miuiIntent_result_set(0, NULL);
+}
+
+
+
+
+
+
+
 static void
 print_property(const char *key, const char *name, void *cookie) {
     printf("%s=%s\n", key, name);
@@ -589,6 +626,7 @@ int main(int argc, char **argv) {
     miuiIntent_register(INTENT_COPY, &intent_copy);
     miuiIntent_register(INTENT_ROOT, &intent_root);
     miuiIntent_register(INTENT_RUN_ORS, &intent_run_ors);
+    miuiIntent_register(INTENT_BACKUP_FORMAT, &intent_backup_format);
 
     device_ui_init();
     load_volume_table();

@@ -93,15 +93,28 @@ static int mount_usb()
     char value[PROPERTY_VALUE_MAX];
     Volume *vol = volume_for_path("/sdcard");
     Volume *vol_ext = volume_for_path("/external_sd");
+    
     char lunfilename[PATH_MAX];
 
     property_get("sys.usb.state", value, "");
     value[PROPERTY_VALUE_MAX - 1] = '\0';
     LOGE("%s: sys.usb.state=%s\n", __func__, value);
-    if (strncmp("mass_storage,adb", value, 16))
+    if (strncmp("mass_storage,adb", value, 16) != 0)
        property_set("sys.usb.config", "mass_storage,adb");
 
 	sprintf(lunfilename, "%s%d/file", acfg()->lun_file, 0);
+	LOGI("lunfile is: '%s' \n",lunfilename);
+#ifdef CRESPO4G
+	if ((fd = open(lunfilename, O_WRONLY)) < 0) {
+		LOGE("Unable to open ums lunfile 0 (%s)", strerror(errno));
+		ret = -1;
+	}
+	if ((write(fd, vol->device, strlen(vol->device)) < 0) && (!vol->device2 || (write(fd, vol->device2, strlen(vol->device2)) < 0))) {
+		LOGE("Unable to write to ums lunfile 0 (%s)", strerror(errno));
+		ret = -1;
+	}
+	close(fd);
+#else
     if ((fd = open(lunfilename, O_WRONLY)) < 0) 
     {
         LOGE("Unable to open ums lunfile 0 (%s)", strerror(errno));
@@ -128,6 +141,7 @@ next:
         ret = -1;
     }
     close(fd);
+#endif
 out:
     return ret;
 }
@@ -140,6 +154,17 @@ static int umount_usb() {
 	char lunfilename[PATH_MAX];
 	
 	sprintf(lunfilename, "%s%d/file", acfg()->lun_file, 0);
+#ifdef CRESPO4G
+	if ((fd = open(lunfilename, O_WRONLY)) < 0) {
+		LOGE("Unable to open ums lunch 0 (%s) ", strerror(errno));
+		ret = -1;
+	}
+	if (write(fd, &ch, 1) < 0) {
+		LOGE("Unable to write ums lunfile 0 (%s)", strerror(errno));
+		ret = -1;
+	}
+	close(fd);
+#else
     if ((fd = open(lunfilename, O_WRONLY)) < 0) 
     {
         LOGE("Unable to open ums lunfile 0 (%s)", strerror(errno));
@@ -168,6 +193,7 @@ next:
         ret = -1;
     }    
     close(fd);
+#endif
 
 out:
     property_get("sys.usb.state", value, "");
@@ -191,21 +217,25 @@ intentResult* intent_toggle(int argc, char *argv[])
     {
         umount_usb();
         ensure_path_unmounted("/sdcard");
+	if (acfg()->sd_ext == 1){
         ensure_path_unmounted("/external_sd");
-        return miuiIntent_result_set(result, "ok");
+	}
+        return miuiIntent_result_set(result, (char*)"ok");
     }
     //wait for usb connected
     //while (is_usb_connected()) ;
     if (is_usb_connected())
     {
         mount_usb();
-        return miuiIntent_result_set(result, "mounted");
+        return miuiIntent_result_set(result, (char*)"mounted");
     }
     LOGE("USB not connect\n");
     umount_usb();
     ensure_path_unmounted("/sdcard");
+     if (acfg()->sd_ext == 1) {
     ensure_path_unmounted("/external_sd");
-    return miuiIntent_result_set(result, "ok");
+     }
+    return miuiIntent_result_set(result,(char*)"ok");
 }
 
 

@@ -120,4 +120,15 @@ root.title=Advantage toolbox
 root.device=root the device 
 root.un_of_rec=Disable to restore the official recovery
 
+root.ors=Run ORS script
+root.choose.sd.ors=choose ORS script from sdcard
+root.choose.sdin.ors=choose ors from internal sd
+
+root.set.brightness=Set Brightness
+root.about.author=About Author
+
+root.free.sd.space=Free sdcard space 
+
+ro.set.backup.format=Set default backup format
+
 

@@ -9,12 +9,15 @@
 #include "../miui.h"
 #include "../../../miui_intent.h"
 
+#define TAR_FORMAT 0
+#define DUP_FORMAT 1
+
 
 #define BACKUP_ALL            1
 #define BACKUP_CACHE          2
 #define BACKUP_DATA           3
 #define BACKUP_SYSTEM         4
-#define BACKUP_BOOT           5
+#define BACKUP_BOOT          5
 #define BACKUP_RECOVERY       6
 
 #define RESTORE_ALL           11
@@ -26,6 +29,24 @@
 
 static struct _menuUnit* p_current = NULL;
 static struct _menuUnit* backup_menu = NULL;
+//SET DEFAULT BACKUP FORMAT
+static STATUS set_default_backup_format(struct _menuUnit* p) {
+	switch (p->result) {
+		case TAR_FORMAT:
+			miuiIntent_send(INTENT_MOUNT, 1, "/sdcard");
+			miuiIntent_send(INTENT_BACKUP_FORMAT, 1, "tar");
+			break;
+		case DUP_FORMAT:
+			miuiIntent_send(INTENT_MOUNT, 1, "/sdcard");
+			miuiIntent_send(INTENT_BACKUP_FORMAT, 1, "dup");
+			break;
+		default:
+			//we should never get here!
+			break;
+	}
+	return MENU_BACK;
+}
+
 static STATUS backup_restore(char* path)
 {
     return_val_if_fail(p_current != NULL, RET_FAIL);
@@ -311,6 +332,29 @@ struct _menuUnit* advanced_restore_ui_init()
     menuUnit_set_show(temp, &restore_child_show);
     return p;
 }
+
+struct _menuUnit* set_backup_fromat_init() {
+	struct _menuUnit* p = common_ui_init();
+	return_null_if_fail(p != NULL);
+	menuUnit_set_name(p, "<~root.set.backup.format>");
+	menuUnit_set_title(p, "set backup format");
+	menuUnit_set_icon(p, "@root");
+	assert_if_fail(menuNode_init(p) != NULL);
+	//tar backup format
+	struct _menuUnit* temp = common_ui_init();
+	menuUnit_set_name(temp, "tar backup format(default)");
+	menuUnit_set_show(temp, &set_default_backup_format);
+	temp->result = TAR_FORMAT;
+	assert_if_fail(menuNode_add(p, temp) == RET_OK);
+	//dup backup format
+	temp = common_ui_init();
+	menuUnit_set_name(temp, "dup backup format");
+	menuUnit_set_show(temp, &set_default_backup_format);
+	temp->result = DUP_FORMAT;
+	assert_if_fail(menuNode_add(p, temp) == RET_OK);
+	return p;
+}
+
 struct _menuUnit* backup_ui_init()
 {
     struct _menuUnit *p = common_ui_init();
@@ -321,8 +365,12 @@ struct _menuUnit* backup_ui_init()
     menuUnit_set_show(p, &common_menu_show);
     return_null_if_fail(menuNode_init(p) != NULL);
     backup_menu = p;
+
+    //set backup default format
+     struct _menuUnit* temp = set_backup_fromat_init();
+     assert_if_fail(menuNode_add(p, temp) == RET_OK);
     //backup
-    struct _menuUnit* temp = common_ui_init();
+    temp = common_ui_init();
     assert_if_fail(menuNode_add(p, temp) == RET_OK);
     menuUnit_set_name(temp, "<~backup.backup.name>");
     menuUnit_set_result(temp, BACKUP_ALL);

@@ -125,6 +125,10 @@ FILE* fopen_path(const char *path, const char *mode);
 //get the reboot_main(int argc, char *argv[])
 int reboot_main(int argc, char *argv[]);
 
+
+//Write string to file
+void write_string_to_file(char* filename, const char* string);
+
 #ifdef __cplusplus
 }
 #endif
