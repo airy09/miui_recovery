@@ -70,7 +70,7 @@ static struct _menuUnit *tree_init()
     //add power
     assert_if_fail(menuNode_add(g_main_menu, power_ui_init()) == RET_OK);
     //add tools operation
-    assert_if_fail(menuNode_add(g_main_menu, tool_ui_init()) == RET_OK);
+    //assert_if_fail(menuNode_add(g_main_menu, tool_ui_init()) == RET_OK);
     //add info
     assert_if_fail(menuNode_add(g_main_menu, info_ui_init()) == RET_OK);
     //add root opertion

@@ -48,6 +48,55 @@
 //
 #define AUTHOR_INFO "/tmp/author_info.log"
 
+static STATUS battary_menu_show(struct _menuUnit* p)
+{
+    if (RET_YES == miui_confirm(3, p->name, p->desc, p->icon)) {
+        miuiIntent_send(INTENT_MOUNT, 1, "/data");
+        unlink("/data/system/batterystats.bin");
+        miuiIntent_send(INTENT_UNMOUNT, 1, "/data");
+        miui_printf("Battery Stats wiped.\n");
+    }
+    return MENU_BACK;
+}
+
+static STATUS permission_menu_show(struct _menuUnit* p)
+{
+    miuiIntent_send(INTENT_MOUNT, 1, "/system");
+    miuiIntent_send(INTENT_MOUNT, 1, "/data");
+    miuiIntent_send(INTENT_SYSTEM, 1, "fix_permissions");
+    miui_alert(4, p->name, "<~global_done>", "@alert", acfg()->text_ok);
+    return MENU_BACK;
+}
+
+static STATUS log_menu_show(struct _menuUnit* p)
+{
+    char desc[512];
+    char file_name[PATH_MAX];
+    struct stat st;
+    time_t timep;
+    struct tm *time_tm;
+    time(&timep);
+    time_tm = gmtime(&timep);
+    if (stat(RECOVERY_PATH, &st) != 0)
+    {
+        mkdir(RECOVERY_PATH, 0755);
+    }
+    snprintf(file_name, PATH_MAX - 1, "%s/log", RECOVERY_PATH);
+    if (stat(file_name, &st) != 0)
+    {
+        mkdir(file_name, 0755);
+    }
+    snprintf(file_name, PATH_MAX - 1, "%s/log/recovery-%02d%02d%02d-%02d%02d.log", RECOVERY_PATH,
+           time_tm->tm_year, time_tm->tm_mon + 1, time_tm->tm_mday,
+           time_tm->tm_hour, time_tm->tm_min);
+    snprintf(desc, 511, "%s%s?",p->desc, file_name);
+    if (RET_YES == miui_confirm(3, p->name, desc, p->icon)) {
+        miuiIntent_send(INTENT_MOUNT, 1, "/sdcard");
+        miuiIntent_send(INTENT_COPY, 2, MIUI_LOG_FILE, file_name);
+    }
+    return MENU_BACK;
+}
+
 static STATUS root_device_item_show(menuUnit *p) {
 	if(RET_YES == miui_confirm(3, p->name, p->desc, p->icon)) {
 		miui_busy_process();
@@ -271,6 +320,13 @@ struct _menuUnit* root_ui_init() {
 	tmp->show = &root_device_item_show;
 	assert_if_fail(menuNode_add(p,tmp) == RET_OK);
 
+	 //fix permission
+         tmp = common_ui_init();
+	 menuUnit_set_name(tmp, "<~tool.permission.name>"); 
+         menuUnit_set_icon(tmp, "@tool.permission");
+         menuUnit_set_show(tmp, &permission_menu_show);
+         assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+
 	//root disable_restore_official_recovery 	
 	tmp = common_ui_init();
 	return_null_if_fail(tmp != NULL);
@@ -296,6 +352,21 @@ struct _menuUnit* root_ui_init() {
 	//ORS function 
 	tmp = ors_ui_init();
 	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+
+	//batarry wipe
+          tmp = common_ui_init();
+          menuUnit_set_name(tmp, "<~tool.battary.name>"); 
+          menuUnit_set_icon(tmp, "@tool.battery");
+          menuUnit_set_show(tmp, &battary_menu_show);
+          assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+	   //copy log
+          tmp = common_ui_init();
+          menuUnit_set_name(tmp, "<~tool.log.name>"); 
+          menuUnit_set_show(tmp, &log_menu_show);
+          menuUnit_set_icon(tmp, "@tool.log");
+          menuUnit_set_desc(tmp, "<~tool.log.desc>");
+          assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+
 
 	return p;
 }

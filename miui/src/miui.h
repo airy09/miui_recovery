@@ -212,7 +212,7 @@ struct _menuUnit* wipe_ui_init();
 //backup_ui.c
 struct _menuUnit* backup_ui_init();
 //tool_ui.c
-struct _menuUnit* tool_ui_init();
+//struct _menuUnit* tool_ui_init();
 //info_ui.c
 struct _menuUnit* info_ui_init();
 //root_ui.c

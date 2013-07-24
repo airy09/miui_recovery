@@ -14,6 +14,8 @@ LOCAL_SRC_FILES := \
 	verifier.cpp \
 	root_device.cpp \
 	reboot.cpp \
+	miui_func.cpp \
+	utils_func.cpp \
 	recovery.cpp 
 
 
@@ -70,7 +72,8 @@ LOCAL_STATIC_LIBRARIES += libminzip libunz libmincrypt \
 			  libunyaffs_static \
 			  libdedupe libselinux \
 			  libedify libcrecovery \
-			  libcrypto_static libmiui 
+			  libcrypto_static libmiui \
+			  libmd5 
 			 
 #LOCAL_STATIC_LIBRARIES += libminzip libunz libmtdutils libmincrypt
 LOCAL_SHARED_LIBRARIES +=  libext4_utils libz libmtdutils  \
@@ -195,6 +198,7 @@ include $(commands_recovery_local_path)/dedupe/Android.mk
 include $(commands_recovery_local_path)/utilities/Android.mk
 #add yaffs2_static
 include $(commands_recovery_local_path)/yaffs2_static/Android.mk
-#add su binary 
+#add digest
+include $(commands_recovery_local_path)/digest/Android.mk
 #include $(commands_recovery_local_path)/su/Android.mk
 commands_recovery_local_path :=

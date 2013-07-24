@@ -40,8 +40,12 @@ extern "C" {
 #include <sys/vfs.h>
 #include "nandroid.h"
 
+#include "miui_func.hpp"
+#include "utils_func.hpp"
 
 #define MIUI_RECOVERY "miui_recovery"
+
+static bool enable_md5 = true;
 
 static void ensure_directory(const char* dir);
 
@@ -152,8 +156,8 @@ static int mkyaffs2image_wrapper(const char* backup_path, const char* backup_fil
 
 static int tar_compress_wrapper(const char* backup_path, const char* backup_file_image, int callback) {
     char tmp[PATH_MAX];
-        sprintf(tmp, "cd $(dirname %s) ; touch %s.tar ; (tar cv %s $(basename %s) | split -a 1 -b 1000000000 /proc/self/fd/0 %s.tar.) 2> /proc/self/fd/1 ; exit $?", backup_path, backup_file_image, strcmp(backup_path, "/data") == 0 && is_data_media() ? "--exclude 'media'" : "", backup_path, backup_file_image);
-  
+       snprintf(tmp, PATH_MAX, "cd $(dirname %s) ; (tar cv %s $(basename %s) | split -a 0 -b 1000000000 /proc/self/fd/0 %s.tar) 2> /proc/self/fd/1 ; exit $?",backup_path, strcmp(backup_path, "/data") == 0 && is_data_media() ? "--exclude 'media'" : "", backup_path,backup_file_image);
+
 
     FILE *fp = __popen(tmp, "r");
     if (fp == NULL) {
@@ -361,8 +365,10 @@ static int nandroid_backup_partition(const char* backup_path, const char* root) 
     return nandroid_backup_partition_extended(backup_path, root, 1);
 }
 
-int nandroid_advanced_backup(const char* backup_path, const char *root)
+extern "C" int nandroid_advanced_backup(const char* backup_path, const char *root)
 {
+
+      utils Utils;
     if (ensure_path_mounted(backup_path) != 0) {
         return print_and_error("Can't mount backup path.\n");
     }
@@ -393,11 +399,9 @@ int nandroid_advanced_backup(const char* backup_path, const char *root)
 
     if (0 != (ret = nandroid_backup_partition(backup_path, root)))
         return ret;
-    ui_print("Generating md5 sum...\n");
-    sprintf(tmp, "nandroid-md5.sh %s", backup_path);
-    if (0 != (ret = __system(tmp))) {
-        ui_print("Error while generating md5 sum!\n");
-        return ret;
+    //Utils.get_file_in_folder(backup_path);
+    if (enable_md5) {
+    Utils.Make_MD5(backup_path);
     }
 
     sync();
@@ -408,6 +412,7 @@ int nandroid_advanced_backup(const char* backup_path, const char *root)
 
 int nandroid_backup(const char* backup_path)
 {
+	utils Utils;
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     refresh_default_backup_handler();
     
@@ -494,13 +499,16 @@ int nandroid_backup(const char* backup_path)
         else if (0 != (ret = nandroid_backup_partition(backup_path, "/sd-ext")))
             return ret;
     }
-
-    ui_print("Generating md5 sum...\n");
-    sprintf(tmp, "nandroid-md5.sh %s", backup_path);
-    if (0 != (ret = __system(tmp))) {
-        ui_print("Error while generating md5 sum!\n");
-        return ret;
-    }
+    // Utils.get_file_in_folder(backup_path);
+     if (enable_md5) {
+    Utils.Make_MD5(backup_path);
+     }
+    //ui_print("Generating md5 sum...\n");
+    //sprintf(tmp, "nandroid-md5.sh %s", backup_path);
+    //if (0 != (ret = __system(tmp))) {
+     //   ui_print("Error while generating md5 sum!\n");
+      //  return ret;
+   // }
     
     sync();
     ui_set_background(BACKGROUND_ICON_NONE);
@@ -762,6 +770,8 @@ static int nandroid_restore_partition(const char* backup_path, const char* root)
 
 int nandroid_restore(const char* backup_path, int restore_boot, int restore_system, int restore_data, int restore_cache, int restore_sdext, int restore_wimax)
 {
+    
+	utils Utils;
     ui_set_background(BACKGROUND_ICON_INSTALLING);
     ui_show_indeterminate_progress();
     yaffs_files_total = 0;
@@ -771,12 +781,18 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
 
     char tmp[PATH_MAX];
 
-    ui_print("Checking MD5 sums...\n");
-    sprintf(tmp, "cd %s && md5sum -c nandroid.md5", backup_path);
-    if (0 != __system(tmp))
-        return print_and_error("MD5 mismatch!\n");
+   // ui_print("Checking MD5 sums...\n");
+   // sprintf(tmp, "cd %s && md5sum -c nandroid.md5", backup_path);
+   // if (0 != __system(tmp))
+      //  return print_and_error("MD5 mismatch!\n");
+   
+    int ret; 
+    if (enable_md5) {
+
+     if (Utils.Check_MD5(backup_path)) {//Check_MD5()
+
+
     
-    int ret;
 
     if (restore_boot && NULL != volume_for_path("/boot") && 0 != (ret = nandroid_restore_partition(backup_path, "/boot")))
         return ret;
@@ -829,10 +845,68 @@ int nandroid_restore(const char* backup_path, int restore_boot, int restore_syst
 
     if (restore_sdext && 0 != (ret = nandroid_restore_partition(backup_path, "/sd-ext")))
         return ret;
+     } 
+    } else {
+	    //disable md5sum
+
+	    if (restore_boot && NULL != volume_for_path("/boot") && 0 != (ret = nandroid_restore_partition(backup_path, "/boot")))
+        return ret;
+    
+    struct stat s;
+    Volume *vol = volume_for_path("/wimax");
+    if (restore_wimax && vol != NULL && 0 == stat(vol->device, &s))
+    {
+        char serialno[PROPERTY_VALUE_MAX];
+        
+        serialno[0] = 0;
+        property_get("ro.serialno", serialno, "");
+        sprintf(tmp, "%s/wimax.%s.img", backup_path, serialno);
+
+        struct stat st;
+        if (0 != stat(tmp, &st))
+        {
+            ui_print("WARNING: WiMAX partition exists, but nandroid\n");
+            ui_print("         backup does not contain WiMAX image.\n");
+            ui_print("         You should create a new backup to\n");
+            ui_print("         protect your WiMAX keys.\n");
+        }
+        else
+        {
+            ui_print("Erasing WiMAX before restore...\n");
+            if (0 != (ret = format_volume("/wimax")))
+                return print_and_error("Error while formatting wimax!\n");
+            ui_print("Restoring WiMAX image...\n");
+            if (0 != (ret = restore_raw_partition(vol->fs_type, vol->device, tmp)))
+                return ret;
+        }
+    }
+     if (restore_system && 0 != (ret = nandroid_restore_partition(backup_path, "/system")))
+        return ret;
+
+    if (restore_data && 0 != (ret = nandroid_restore_partition(backup_path, "/data")))
+        return ret;
+        
+    if (has_datadata()) {
+        if (restore_data && 0 != (ret = nandroid_restore_partition(backup_path, "/datadata")))
+            return ret;
+    }
+
+    if (restore_data && 0 != (ret = nandroid_restore_partition_extended(backup_path, "/sdcard/.android_secure", 0)))
+        return ret;
+
+    if (restore_cache && 0 != (ret = nandroid_restore_partition_extended(backup_path, "/cache", 0)))
+        return ret;
+
+    if (restore_sdext && 0 != (ret = nandroid_restore_partition(backup_path, "/sd-ext")))
+        return ret;
+     } 
 
     sync();
     ui_set_background(BACKGROUND_ICON_NONE);
     ui_reset_progress();
+    printf("Restore path is: '%s' \n", backup_path); //if will get the full backup path
+    //sdcard/miui_recovery/backup/data/1130722-0718
+    //
     ui_print("\nRestore complete!\n");
     return 0;
 }

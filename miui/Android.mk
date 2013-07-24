@@ -69,11 +69,11 @@ libmiui_common_src_files :=libs/png/png.c \
     src/main/wipe_ui.c \
     src/main/backup_ui.c \
     src/main/info_ui.c \
-    src/main/tool_ui.c \
     src/main/menu_node.c \
     src/main/miui_installer.c \
     src/main/miui.c \
     src/main/root_ui.c 
+   # src/main/tool_ui.c 
 
 LOCAL_SRC_FILES := \
     $(libmiui_common_src_files) \
