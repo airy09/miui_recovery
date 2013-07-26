@@ -84,6 +84,10 @@ LOCAL_SHARED_LIBRARIES +=  libext4_utils libz libmtdutils  \
 			   libsparse libstlport
 LOCAL_LDFLAGS := -ldl 
 
+ifeq ($(TARGET_BOOTLOADER_BOARD_NAME), herring)
+	LOCAL_CFLAGS := -DCRESPO
+endif
+
 #add static libraries
 #LOCAL_STATIC_LIBRARIES += libedify libcrecovery libflashutils libmmcutils libbmlutils
 #LOCAL_STATIC_LIBRARIES += libmkyaffs2image libunyaffs liberase_image libdump_image libflash_image
@@ -141,7 +145,7 @@ LOCAL_SRC_FILES := verifier_test.cpp verifier.cpp
 LOCAL_MODULE := verifier_test
 
 #LOCAL_FORCE_STATIC_EXECUTABLE := true
-
+LOCAL_CPPFLAGS := -std=c90
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_STATIC_LIBRARIES := libmincrypt 
@@ -200,5 +204,8 @@ include $(commands_recovery_local_path)/utilities/Android.mk
 include $(commands_recovery_local_path)/yaffs2_static/Android.mk
 #add digest
 include $(commands_recovery_local_path)/digest/Android.mk
+#add device conf
+include $(commands_recovery_local_path)/devices/Android.mk
 #include $(commands_recovery_local_path)/su/Android.mk
 commands_recovery_local_path :=
+

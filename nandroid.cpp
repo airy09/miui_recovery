@@ -402,6 +402,7 @@ extern "C" int nandroid_advanced_backup(const char* backup_path, const char *roo
     //Utils.get_file_in_folder(backup_path);
     if (enable_md5) {
     Utils.Make_MD5(backup_path);
+	  //  utils::Make_MD5(backup_path);
     }
 
     sync();

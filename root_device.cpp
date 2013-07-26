@@ -335,7 +335,7 @@ int check_for_script_file(const char* ors_boot_script)
         // Delete the file from /cache
         strcpy(exec, "rm ");
         strcat(exec, ors_boot_script);
-        // __system(exec);
+         __system(exec);
     }
     return ret_val;
 }

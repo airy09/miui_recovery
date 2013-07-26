@@ -36,6 +36,7 @@ class miui_func {
 	        static int read_file(string fn, vector<string>& results); //read from file
         	static int read_file(string fn, string& results); //read from file
 	        static int write_file(string fn, string& line); //write from file
+		int read_md5digest(void);
 
                 void setfn(string fn); //for md5
                 void setdir(string dir);
@@ -46,7 +47,7 @@ class miui_func {
 //	public:
 //		friend class utils;
 	private:
-		int read_md5digest(void);
+	//	int read_md5digest(void);
 		string md5fn;
 		string line;
 		unsigned char md5sum[MD5LENGTH];
