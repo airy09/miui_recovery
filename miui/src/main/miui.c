@@ -112,9 +112,13 @@ STATUS main_ui_init()
     miui_ui_config("/res/device.conf");
     tree_init();
 
-
+#ifdef BUILD_CHN_REC
     miui_font( "0", "ttf/DroidSans.ttf;ttf/DroidSansFallback.ttf;", "12" );
     miui_font( "1", "ttf/DroidSans.ttf;ttf/DroidSansFallback.ttf;", "18" );
+#else
+    miui_font("0", "ttf/DroidSans.ttf", "12");
+    miui_font("1", "ttf/DroidSans.ttf", "18");
+#endif
     return RET_OK;
 }
 STATUS main_ui_show()

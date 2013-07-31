@@ -42,7 +42,7 @@ extern "C" {
 #include "common.h"
 
 struct selabel_handle* handle;
-
+static char **BACKUP_FORMAT;
 int num_volumes;
 Volume* device_volumes;
 
@@ -93,6 +93,7 @@ static int parse_options(char* options, Volume* volume) {
 void load_volume_table() {
     int alloc = 2;
     device_volumes = (Volume*)malloc(alloc * sizeof(Volume));
+    BACKUP_FORMAT = (char**)malloc(alloc * sizeof(char*));
 
     // Insert an entry for /tmp, which is the ramdisk and is always mounted.
     device_volumes[0].mount_point = "/tmp";
@@ -103,6 +104,7 @@ void load_volume_table() {
     device_volumes[0].fs_options = NULL;
     device_volumes[0].fs_options2 = NULL;
     device_volumes[0].length = 0;
+    BACKUP_FORMAT[0] = NULL;
     num_volumes = 1;
 
     FILE* fstab = fopen("/etc/recovery.fstab", "r");
@@ -139,6 +141,7 @@ void load_volume_table() {
             while (num_volumes >= alloc) {
                 alloc *= 2;
                 device_volumes = (Volume*)realloc(device_volumes, alloc*sizeof(Volume));
+		BACKUP_FORMAT = (char**)realloc(BACKUP_FORMAT, alloc * sizeof(char*));
             }
             device_volumes[num_volumes].mount_point = strdup(mount_point);
             device_volumes[num_volumes].fs_type = strdup(fs_type);
@@ -151,6 +154,22 @@ void load_volume_table() {
             device_volumes[num_volumes].fs_type2 = NULL;
             device_volumes[num_volumes].fs_options = NULL;
             device_volumes[num_volumes].fs_options2 = NULL;
+	    if (strncmp(fs_type, "emmc",4) == 0 ||
+			    strncmp(fs_type, "mtd", 3) == 0 ||
+			    strncmp(fs_type, "bml", 3) == 0) {
+		    BACKUP_FORMAT[num_volumes] = strdup("DD");
+	    } else if  (strncmp(fs_type, "ext4", 4) == 0 ||
+			    strncmp(fs_type, "ext3", 4) == 0 ||
+			    strncmp(fs_type, "vfat", 4) == 0 ||
+			    strncmp(fs_type, "rfs" , 3) == 0 ||
+			    strncmp(fs_type, "yaffs2", 6) == 0) {
+		    BACKUP_FORMAT[num_volumes] = strdup("FILES");
+	    } else {
+		    BACKUP_FORMAT[num_volumes] = strdup(" ");
+	    }
+
+	   
+	    
 
             if (parse_options(options, device_volumes + num_volumes) != 0) {
                 LOGE("skipping malformed recovery.fstab line: %s\n", original);
@@ -167,12 +186,17 @@ void load_volume_table() {
 
     printf("recovery filesystem table\n");
     printf("=========================\n");
-    for (i = 0; i < num_volumes; ++i) {
+    for (i = 0; i < num_volumes; i++) {
         Volume* v = &device_volumes[i];
-        printf("  %d %s %s %s %s %lld\n", i, v->mount_point, v->fs_type,
-               v->device, v->device2, v->length);
+        printf(" Index: %d\nMount point: %s\nFS_TYPE: %s\nDevice: %s\nDevice2: %s\nLength: %lld\n BACKUP_FORMAT: %s\n\n", i, v->mount_point, v->fs_type,
+               v->device, v->device2, v->length,BACKUP_FORMAT[i]);
     }
     printf("\n");
+
+    for(i = 0; i < num_volumes; ++i) {
+	    free(BACKUP_FORMAT[i]);
+    }
+    free(BACKUP_FORMAT);
 }
 
 Volume* volume_for_path(const char* path) {

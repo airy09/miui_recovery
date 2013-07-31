@@ -48,6 +48,12 @@
 //
 #define AUTHOR_INFO "/tmp/author_info.log"
 
+//on || off
+//default on
+#define MD5_STATE "/sdcard/miui_recovery/backup/.md5_state"
+
+static struct _menuUnit *md5_node = NULL;
+
 static STATUS battary_menu_show(struct _menuUnit* p)
 {
     if (RET_YES == miui_confirm(3, p->name, p->desc, p->icon)) {
@@ -221,6 +227,82 @@ static STATUS about_author_menu_show(menuUnit* p) {
 	 miui_textbox(p->name, p->title_name, p->icon, miui_readfromfs(file_name));
 	 return MENU_BACK;
 }
+//refresh_md5_check_state();
+int is_md5_enabled() {
+	struct stat st;
+	char fmt[5];
+	miuiIntent_send(INTENT_MOUNT, 1, "/sdcard");
+//	if (stat(MD5_STATE, &st) == 0) {
+        FILE *md5_file = fopen(MD5_STATE, "r");
+        if (NULL == md5_file) { //当文件不存在的时候，默认为开启md5检测
+	return 1;
+	}
+        fread(fmt, 1, sizeof(fmt), md5_file);
+        fclose(md5_file);
+        
+        fmt[3] = NULL;
+       if (0 == strcmp(fmt, "on"))
+              return 1; //开启md5检测
+       return 0; //关闭md5检测
+}
+
+static STATUS enable_or_disable_md5_check(struct _menuUnit* p) {
+	if (RET_YES == miui_confirm(3, p->name, p->desc, p->icon)) {
+		miui_busy_process();
+		if (is_md5_enabled()) {
+			menuUnit_set_name(md5_node, "<~root.disabled.md5>");
+			printf("set md5 check on\n");
+			miui_writetofs(MD5_STATE, "off");
+
+		} else {
+			menuUnit_set_name(md5_node, "<~root.enabled.md5>");
+			printf("set md5 check off\n");
+			miui_writetofs(MD5_STATE, "on");
+		}
+	}
+
+   return MENU_BACK;
+}
+
+static STATUS tool_menu_show(struct _menuUnit* p) {
+	if (is_md5_enabled()) { //当为1的时候，表示已经打开md5检测，这个里就需要关闭md5选项
+		menuUnit_set_name(md5_node, "<~root.disabled.md5>");
+		menuUnit_set_icon(md5_node, "@alert");
+	} else {
+		menuUnit_set_name(md5_node, "<~root.enabled.md5>");
+		menuUnit_set_icon(md5_node, "@alert");
+	}
+	 //show menu
+    return_val_if_fail(p != NULL, RET_FAIL);
+    int n = p->get_child_count(p);
+    return_val_if_fail(n > 0, RET_FAIL);
+    int selindex = 0;
+    return_val_if_fail(n >= 1, RET_FAIL);
+    return_val_if_fail(n < ITEM_COUNT, RET_FAIL);
+    struct _menuUnit *temp = p->child;
+    return_val_if_fail(temp != NULL, RET_FAIL);
+    char **menu_item = malloc(n * sizeof(char *));
+    assert_if_fail(menu_item != NULL);
+    char **icon_item=malloc(n * sizeof(char *));
+    assert_if_fail(icon_item != NULL);
+    char **title_item= malloc(n * sizeof(char *));
+    assert_if_fail(title_item != NULL);
+    int i = 0;
+    for (i = 0; i < n; i++)
+    {
+        menu_item[i] = temp->name;
+        title_item[i] = temp->title_name;
+        icon_item[i] = temp->icon;
+        temp = temp->nextSilbing;
+    }
+    selindex = miui_menubox(p->name, menu_item, n);
+    p->result = selindex;
+    if (menu_item != NULL) free(menu_item);
+    if (title_item != NULL) free(title_item);
+    if (icon_item != NULL) free(icon_item);
+    return p->result;
+}
+
 
 struct _menuUnit* ors_ui_init() {
 	struct _menuUnit* p = common_ui_init();
@@ -246,7 +328,6 @@ struct _menuUnit* ors_ui_init() {
 
 	return p;
 }
-
 
 struct _menuUnit* brightness_ui_init() {
 	struct _menuUnit* p = common_ui_init();
@@ -301,6 +382,9 @@ struct _menuUnit* root_ui_init() {
         menuUnit_set_name(p, "<~root.name>");
 	menuUnit_set_title(p, "<~root.title>");
 	menuUnit_set_icon(p, "@root");
+//for md5 check
+	menuUnit_set_show(p, &tool_menu_show);
+
 	assert_if_fail(menuNode_init(p) != NULL);
 
 	//show info of the author 
@@ -310,6 +394,20 @@ struct _menuUnit* root_ui_init() {
 	menuUnit_set_icon(tmp, "@info");
         menuUnit_set_show(tmp, &about_author_menu_show);
 	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+
+
+	//for md5 check
+	tmp = common_ui_init();
+	if (is_md5_enabled()) {
+		menuUnit_set_name(tmp, "<~root.disabled.md5>");
+		menuUnit_set_icon(tmp, "@alert");
+	} else {
+		menuUnit_set_name(tmp, "<~root.enabled.md5>");
+		menuUnit_set_icon(tmp, "@alert");
+	}
+	menuUnit_set_show(tmp, &enable_or_disable_md5_check);
+	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+	md5_node = tmp;
 
         //root device 
 	tmp = common_ui_init();

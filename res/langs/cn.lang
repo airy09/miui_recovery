@@ -134,3 +134,6 @@ root.about.author=关于作者
 root.free.sd.space=释放sd空间
 
 root.set.backup.format=设置默认的备份格式
+
+root.enabled.md5=MD5检测开启
+root.disabled.md5=MD5检测关闭

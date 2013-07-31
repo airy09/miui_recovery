@@ -30,6 +30,7 @@
 #include "../miui_inter.h"
 
 /*****************************[RECOVERY COLOR MODE VARIABLES ] ****************/
+/*
 #ifdef RECOVERY_BGRA
 #define PIXEL_FORMAT GGL_PIXEL_FORMAT_BGRA_8888
 #define PIXEL_SIZE 4
@@ -42,7 +43,7 @@
 #define PIXEL_FORMAT GGL_PIXEL_FORMAT_RGB_565
 #define PIXEL_SIZE 2
 #endif
-
+*/
 #define NUM_BUFFERS 2
 
 
@@ -331,7 +332,50 @@ byte ag_init(){
     }
     else{
       ag_32     = 1;
-      
+
+
+
+#ifdef GGL_PIXEL_FORMAT_RGBX_8888
+      ag_fbv.red.offset = 24;
+      ag_fbv.red.length = 8;
+      ag_fbv.green.offset = 16;
+      ag_fbv.green.length = 8;
+      ag_fbv.blue.offset = 8;
+      ag_fbv.blue.length = 8;
+      ag_fbv.transp.offset = 0;
+      ag_fbv.transp.length = 8;
+#endif
+
+#ifdef GGL_PIXEL_FORMAT_BGRA_8888
+      ag_fbv.red.offset = 8;
+      ag_fbv.red.length = 8;
+      ag_fbv.green.offset = 16;
+      ag_fbv.green.length = 8;
+      ag_fbv.blue.offset = 24;
+      ag_fbv.blue.length = 8;
+      ag_fbv.transp.offset = 0;
+      ag_fbv.transp.length = 8;
+#endif
+
+#ifdef GGL_PIXEL_FORMAT_RGBX_8888 
+
+       if (ioctl(ag_fb, FBIOPUT_VSCREENINFO, &ag_fbv) < 0)
+      {
+          perror("failed to put fb0 info");
+          close(ag_fb);
+          return -1;
+      }
+
+#endif  
+
+#ifdef GGL_PIXEL_FORMAT_BGRA_8888
+     if (ioctl(ag_fb, FBIOPUT_VSCREENINFO, &ag_fbv) < 0) {
+	   perror("Failed to put fb0 info");
+	 close(ag_fb);
+       return -1;
+     }
+#endif
+
       //-- Memory Allocation
       ag_fbuf32 = (byte*) mmap(0,ag_fbf.smem_len,PROT_READ|PROT_WRITE,MAP_SHARED,ag_fb,0);
       ag_bf32   = (dword*) malloc(ag_fbsz);
@@ -376,12 +420,12 @@ void ag_close_thread(){
 
 //-- RELEASE AMARULLZ GRAPHIC
 void ag_close(){
-  if (ag_fbv.bits_per_pixel!=16){
+  if (ag_fbv.bits_per_pixel!=16){ //32 bit 
     if (ag_bf32!=NULL) free(ag_bf32);
     if (ag_bz32!=NULL) free(ag_bz32);
     if (ag_fbuf32!=NULL) munmap(ag_fbuf32,ag_fbsz);
   }
-  else if (ag_fbv.bits_per_pixel==16){
+  else if (ag_fbv.bits_per_pixel==16){ //16 bit
     if (ag_b!=NULL) free(ag_b);
     if (ag_bz!=NULL) free(ag_bz);
     if (ag_fbuf!=NULL) munmap(ag_fbuf,ag_fbsz);

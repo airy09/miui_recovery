@@ -129,6 +129,8 @@ root.about.author=About Author
 
 root.free.sd.space=Free sdcard space 
 
-ro.set.backup.format=Set default backup format
+root.set.backup.format=Set default backup format
 
+root.enabled.md5=Enable md5 check the file
+root.disabled.md5=Disable md5 check the file
 
