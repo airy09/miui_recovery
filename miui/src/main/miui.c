@@ -86,11 +86,13 @@ static struct _menuUnit *tree_init()
 }
 STATUS main_ui_init()
 {
+	/*
 #ifndef _MIUI_NODEBUG
     miui_debug("function main_ui_init enter miui debug\n");
     remove_directory("/tmp/miui-memory");
     miui_memory_debug_init();
 #endif
+*/
     miui_printf("Initializing...\n");
     remove_directory(MIUI_TMP);
     unlink(MIUI_TMP_S);
@@ -151,10 +153,11 @@ STATUS main_ui_show()
 
 STATUS main_ui_release()
 {
-
+/*
 #ifndef _MIUI_NODEBUG
   miui_dump_malloc();
 #endif
+*/
   miui_ui_end();
   ag_close_thread();
   //clear ui tree

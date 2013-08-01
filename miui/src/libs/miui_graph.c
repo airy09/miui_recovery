@@ -228,7 +228,9 @@ byte ag_init(){
     //-- Init Info from IO
     ioctl(ag_fb, FBIOGET_FSCREENINFO, &ag_fbf);
     ioctl(ag_fb, FBIOGET_VSCREENINFO, &ag_fbv);
-    
+#ifdef PIXEL_FORMAT_BGR_565
+   ag_fbv.bits_per_pixel = 16;
+#endif 
     //-- Init 32 Buffer
     ag_canvas(&ag_c,ag_fbv.xres,ag_fbv.yres);
     ag_dp = floor( min(ag_fbv.xres,ag_fbv.yres) / 160);

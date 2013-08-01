@@ -65,16 +65,20 @@ LOCAL_MODULE_TAGS := eng
 
 LOCAL_C_INCLUDES += bionic \
 		    external/libselinux/include \
-		    external/stlport/stlport
+		    external/stlport/stlport \
+		    external/freetype/include \
+		    external/freetype/build \
+		    external/zlib \
+		    external/libpng
 LOCAL_CFLAGS += -DHAVE_SELINUX
 LOCAL_STATIC_LIBRARIES += libminzip libunz libmincrypt \
 			  libmkyaffs2image_static \
 			  libunyaffs_static \
 			  libdedupe libselinux \
 			  libedify libcrecovery \
-			  libcrypto_static libmiui \
-			  libmd5 
-			 
+			  libcrypto_static  \
+			  libmd5  libmiui
+LOCAL_STATIC_LIBRARIES += libft2 libpng 			 
 #LOCAL_STATIC_LIBRARIES += libminzip libunz libmtdutils libmincrypt
 LOCAL_SHARED_LIBRARIES +=  libext4_utils libz libmtdutils  \
 			   libflashutils libmmcutils \

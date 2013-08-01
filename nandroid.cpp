@@ -252,9 +252,9 @@ static void refresh_md5_check_state() {
 
 	if (0 == strcmp(fmt, "off")) {
 		enable_md5 = false;
-	        
-	else 
+	}  else {
 		enable_md5 = true;
+	}
 }
 
 

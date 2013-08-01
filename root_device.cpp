@@ -40,7 +40,7 @@ extern "C" {
 
 /*
  * Author: sndnvaps@gmail.com
- * date: 2013/05/16
+ * date: 2013/08/01
  *
  *
  */
@@ -80,7 +80,7 @@ const char* super_su_list[] = {
 };
 
 
-int remove_supersu() {
+int root_device::remove_supersu() {
 	struct stat st;
 	int i = 0;
 	char cmd[256];
@@ -137,7 +137,7 @@ int remove_supersu() {
 }
 
 
-int install_supersu() {
+int root_device::install_supersu() {
 
 	struct stat st;
 	char cmd[256];
@@ -211,7 +211,7 @@ int install_supersu() {
           	return 0;
 }
 
-int un_of_recovery() {
+int root_device::un_of_recovery() {
 	struct stat st;
 	char *tmp1 = "/system/etc/install-recovery.sh";
 	char *tmp2 = "/system/recovery-from-boot.p";
@@ -272,7 +272,7 @@ int check_sig() {
 
 */
 
-
+/*
 int root_device_main(char *cmd) {
 	int ret = 0;
 	if(cmd != NULL) {
@@ -296,7 +296,7 @@ int root_device_main(char *cmd) {
    }
 	return 0;
 }
-
+*/
 // # *** Thanks to PhilZ for all of this! *** #
 // He has been such a HUGE part of where this recovery has ended up.
 //
@@ -304,7 +304,7 @@ int root_device_main(char *cmd) {
 // ** adapted code from philZ ** //
 #define SCRIPT_COMMAND_SIZE 512
 //check ors script at boot (called from recovery.c)
-int check_for_script_file(const char* ors_boot_script)
+int root_device::check_for_script_file(const char* ors_boot_script)
 {
     //ensure_path_mounted("/sdcard");
     miuiIntent_send(INTENT_MOUNT, 1, "/sdcard");
@@ -341,7 +341,7 @@ int check_for_script_file(const char* ors_boot_script)
 }
 //run ors script code
 //this can start on boot or manually for custom ors
-int run_ors_script(const char* ors_script) {
+int root_device::run_ors_script(const char* ors_script) {
     FILE *fp = fopen(ors_script, "r");
     int ret_val = 0, cindex, line_len, i, remove_nl;
     char script_line[SCRIPT_COMMAND_SIZE], command[SCRIPT_COMMAND_SIZE],

@@ -37,7 +37,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <minutf8.h>
+#include "../include/minutf8.h"
 #include <pthread.h>
 
 //
@@ -45,9 +45,13 @@
 //
 #include <ft2build.h>
 #include FT_FREETYPE_H
+//#include "../include/freetype/freetype.h"
 #include FT_TRUETYPE_IDS_H
-#include <freetype/ftsynth.h>
+//#include "../include/freetype/ttnameid.h"
+
+//#include "../include/freetype/ftsynth.h"
 #include FT_GLYPH_H
+//#include "../include/freetype/ftglyph.h"
 #include "utils.h"
 
 //

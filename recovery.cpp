@@ -478,13 +478,14 @@ static intentResult* intent_copy(int argc, char* argv[])
 //INTENT_ROOT, root_device | un_of_rec
 //INTENT_ROOT, dedupe_gc -> free the space of the sdcard 
 static intentResult* intent_root(int argc, char *argv[]) {
+	root_device root;
 	return_intent_result_if_fail(argc == 1);
 	finish_recovery(NULL);
 
          if(strcmp(argv[0], "root_device") == 0) {
-		root_device_main(argv[0]);
+		root.install_supersu();
 	} else if (strcmp(argv[0], "un_of_rec") == 0) {
-		root_device_main(argv[0]);
+		root.un_of_recovery();
 	} else if (strcmp(argv[0], "dedupe_gc") == 0) {
 		nandroid_dedupe_gc("/sdcard/miui_recovery/backup/blobs");
 	} else {
@@ -496,11 +497,12 @@ static intentResult* intent_root(int argc, char *argv[]) {
 
 // INTENT_RUN_ORS scripts.ors | *.ors 
 static intentResult* intent_run_ors(int argc, char *argv[]) {
+	root_device root;
 	return_intent_result_if_fail(argc == 1);
 	finish_recovery(NULL);
 	if(strstr(argv[0], ".ors") != NULL) {
-	 	if (0 == (check_for_script_file(argv[0]))) {
-			if ( 0 == run_ors_script("/tmp/openrecoveryscript")) {      
+	 	if (0 == (root.check_for_script_file(argv[0]))) {
+			if ( 0 == root.run_ors_script("/tmp/openrecoveryscript")) {      
 				printf("success run openrecoveryscript....\n");
 			} else {
 				LOGE("cannot run openrecoveryscript...\n");
@@ -643,7 +645,7 @@ int main(int argc, char **argv) {
     char *send_intent = NULL;
     int wipe_data = 0, wipe_cache = 0;
   //  int sideload = 0;
-
+   root_device root;
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
         switch (arg) {
@@ -713,10 +715,10 @@ int main(int argc, char **argv) {
 	//we are starting up in user initiated recovery here
 	//let's set up some defaut options;
 	ui_set_background(BACKGROUND_ICON_INSTALLING);
-	if( 0 == check_for_script_file("/cache/recovery/openrecoveryscript")) {
+	if( 0 == root.check_for_script_file("/cache/recovery/openrecoveryscript")) {
 		LOGI("Runing openrecoveryscript...\n");
 		int ret;
-		if (0 == (ret = run_ors_script("/tmp/openrecoveryscript"))) {
+		if (0 == (ret = root.run_ors_script("/tmp/openrecoveryscript"))) {
 			status = INSTALL_SUCCESS;
 			//ui_set_show_text(0);
 		} else {
