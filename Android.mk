@@ -211,5 +211,7 @@ include $(commands_recovery_local_path)/digest/Android.mk
 #add device conf
 include $(commands_recovery_local_path)/devices/Android.mk
 #include $(commands_recovery_local_path)/su/Android.mk
+#add device_image
+include $(commands_recovery_local_path)/device_image/Android.mk
 commands_recovery_local_path :=
 

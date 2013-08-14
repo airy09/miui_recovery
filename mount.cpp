@@ -102,24 +102,6 @@ static int mount_usb()
     if (strncmp("mass_storage,adb", value, 16) != 0)
        property_set("sys.usb.config", "mass_storage,adb");
 
-#ifdef CRESPO
-first:
-    	sprintf(lunfilename, "%s/file", acfg()->lun_file);
-	LOGI("lunfile is: '%s' \n",lunfilename);
-    if ((fd = open(lunfilename, O_WRONLY)) < 0) 
-    {
-        LOGE("Unable to open ums lunfile  (%s)", strerror(errno));
-        ret = -1;
-        goto first;
-    }
-    if ((write(fd, vol->device, strlen(vol->device)) < 0) && (!vol->device2 || (write(fd, vol->device2, strlen(vol->device2)) < 0))) 
-    {
-        LOGE("Unable to write to ums lunfile  (%s)", strerror(errno));
-        ret = -1;
-    }
-#else
-
-
 
 	sprintf(lunfilename, "%s%d/file", acfg()->lun_file, 0);
 	LOGI("lunfile is: '%s' \n",lunfilename);
@@ -141,14 +123,26 @@ next:
     {
         LOGE("Unable to open ums lunfile 1 (%s)", strerror(errno));
         ret = -1;
-        goto out;
+        goto next_next;
     }
     if ((write(fd, vol_ext->device, strlen(vol_ext->device)) < 0) && (!vol_ext->device2 || (write(fd, vol_ext->device2, strlen(vol_ext->device2)) < 0))) 
     {
         LOGE("Unable to write to ums lunfile 1 (%s)", strerror(errno));
         ret = -1;
     }
-#endif
+
+next_next:
+    sprintf(lunfilename, "%s/file",acfg()->lun_file);
+    if ((fd = open(lunfilename, O_WRONLY)) < 0) {
+	    LOGE("Unable to open ums lunfile (%s)", strerror(errno));
+	    ret = -1;
+	    goto out;
+    }
+    if ((write(fd, vol->device, strlen(vol->device)) < 0) || ( write(fd, vol_ext->device, strlen(vol_ext->device)) < 0)) {
+	    LOGE("Unable to write ums lunfile (%s)", strerror(errno));
+	    ret = -1;
+    }
+
     close(fd);
 out:
     return ret;
@@ -161,22 +155,7 @@ static int umount_usb() {
     char value[PROPERTY_VALUE_MAX];
 	char lunfilename[PATH_MAX];
 	
-#ifdef CRESPO
-first:
-	sprintf(lunfilename, "%s/file", acfg()->lun_file);
-    if ((fd = open(lunfilename, O_WRONLY)) < 0) 
-    {
-        LOGE("Unable to open ums lunfile  (%s)", strerror(errno));
-        ret = -1;
-		goto first;
-    }
-
-    if (write(fd, &ch, 1) < 0) 
-    {
-        LOGE("Unable to write to ums lunfile  (%s)", strerror(errno));
-        ret = -1;
-    }
-#else   
+  
    	sprintf(lunfilename, "%s%d/file", acfg()->lun_file, 0);
     if ((fd = open(lunfilename, O_WRONLY)) < 0) 
     {
@@ -196,7 +175,7 @@ next:
     {
         LOGE("Unable to open ums lunfile 1 (%s)", strerror(errno));
         ret = -1;
-		goto next;
+		goto next_next;
     }
 
     if (write(fd, &ch, 1) < 0) 
@@ -204,7 +183,19 @@ next:
         LOGE("Unable to write to ums lunfile 1 (%s)", strerror(errno));
         ret = -1;
     }
-#endif    
+
+next_next:
+    sprintf(lunfilename, "%s/file", acfg()->lun_file);
+    if ((fd = open(lunfilename, O_WRONLY)) < 0) {
+	    LOGE("Unable to open ums lunfile (%s)", strerror(errno));
+	    ret = -1;
+	    goto out;
+    }
+    if (write(fd, &ch, 1) < 0) {
+	    LOGE("Unable to write ums lunfile (%s)", strerror(errno));
+	    ret = -1;
+    }
+
     close(fd);
 
 out:

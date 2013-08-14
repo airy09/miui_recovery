@@ -95,7 +95,7 @@ LOCAL_CFLAGS += -I$(LOCAL_PATH)/include \
 		-I$(LOCAL_PATH)/../../../external/freetype/builds \
 		-I$(LOCAL_PATH)/../../../external/zlib \
 		-I$(LOCAL_PATH)/../../../external/libpng
-LOCAL_CFLAGS += -D_MIUI_NODEBUG
+#LOCAL_CFLAGS += -D_MIUI_NODEBUG
 LOCAL_SHARED_LIBRARIES += libc libm libz
 LOCAL_STATIC_LIBRARIES := libft2 libpng
 LOCAL_MODULE := libmiui

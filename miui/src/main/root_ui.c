@@ -131,9 +131,11 @@ static STATUS root_device_item_show(menuUnit *p) {
 
 static STATUS brightness_menu_show(struct _menuUnit* p) {
 	switch (p->result) {
+		/*
 		case  0:
 			screen_set_brightness("0");
 			break;
+			*/
 		case 15:
 			screen_set_brightness("15");
 			break;
@@ -251,12 +253,12 @@ static STATUS enable_or_disable_md5_check(struct _menuUnit* p) {
 		miui_busy_process();
 		if (is_md5_enabled()) {
 			menuUnit_set_name(md5_node, "<~root.disabled.md5>");
-			printf("set md5 check on\n");
+			printf("set md5 check off\n");
 			miui_writetofs(MD5_STATE, "off");
 
 		} else {
 			menuUnit_set_name(md5_node, "<~root.enabled.md5>");
-			printf("set md5 check off\n");
+			printf("set md5 check on\n");
 			miui_writetofs(MD5_STATE, "on");
 		}
 	}
@@ -337,13 +339,15 @@ struct _menuUnit* brightness_ui_init() {
 	menuUnit_set_icon(p, "@root");
 	assert_if_fail(menuNode_init(p) != NULL);
 	//0% brightness
+	/*
 	struct _menuUnit* temp = common_ui_init();
 	menuUnit_set_name(temp, "0% Brightness");
 	menuUnit_set_show(temp, &brightness_menu_show);
 	temp->result = 0;
 	assert_if_fail(menuNode_add(p, temp) == RET_OK);
+	*/
 	//15% brightness 
-	temp = common_ui_init();
+	struct _menuUnit* temp = common_ui_init();
 	menuUnit_set_name(temp, "15% Brightness");
 	menuUnit_set_show(temp, &brightness_menu_show);
 	temp->result = 15;
