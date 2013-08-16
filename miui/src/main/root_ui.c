@@ -229,6 +229,7 @@ static STATUS about_author_menu_show(menuUnit* p) {
 	 miui_textbox(p->name, p->title_name, p->icon, miui_readfromfs(file_name));
 	 return MENU_BACK;
 }
+/*
 //refresh_md5_check_state();
 int is_md5_enabled() {
 	struct stat st;
@@ -305,6 +306,7 @@ static STATUS tool_menu_show(struct _menuUnit* p) {
     return p->result;
 }
 
+*/
 
 struct _menuUnit* ors_ui_init() {
 	struct _menuUnit* p = common_ui_init();
@@ -386,11 +388,12 @@ struct _menuUnit* root_ui_init() {
         menuUnit_set_name(p, "<~root.name>");
 	menuUnit_set_title(p, "<~root.title>");
 	menuUnit_set_icon(p, "@root");
+	/*
 //for md5 check
 	menuUnit_set_show(p, &tool_menu_show);
 
 	assert_if_fail(menuNode_init(p) != NULL);
-
+*/
 	//show info of the author 
 	struct _menuUnit *tmp = common_ui_init();
 	return_null_if_fail(tmp != NULL);
@@ -399,7 +402,7 @@ struct _menuUnit* root_ui_init() {
         menuUnit_set_show(tmp, &about_author_menu_show);
 	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
 
-
+/*
 	//for md5 check
 	tmp = common_ui_init();
 	if (is_md5_enabled()) {
@@ -412,7 +415,7 @@ struct _menuUnit* root_ui_init() {
 	menuUnit_set_show(tmp, &enable_or_disable_md5_check);
 	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
 	md5_node = tmp;
-
+*/
         //root device 
 	tmp = common_ui_init();
 	return_null_if_fail(tmp != NULL);

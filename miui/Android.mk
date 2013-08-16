@@ -88,7 +88,7 @@ LOCAL_C_INCLUDES += $(libmiui_common_includes) \
 		    external/freetype/include \
 		    external/libpng
 LOCAL_CFLAGS := $(MYDEFINE_CFLAGS)
-#LOCAL_CFLAGS += -W -Wall
+LOCAL_CFLAGS += -DDEBUG
 #LOCAL_CFLAGS += -fPIC -DPIC
 LOCAL_CFLAGS += -I$(LOCAL_PATH)/include \
 		-I$(LOCAL_PATH)/../../../external/freetype/include \
