@@ -34,7 +34,7 @@ typedef int u32;
 //rom_version
 #define MIUI_VERSION     "v3.0.0"
 //rom date
-#define MIUI_BUILD       "2013-07-05"
+#define MIUI_BUILD       "2013-09-13"
 #define MIUI_BUILD_CN    "Friday"
 #define MIUI_BUILD_L     "sndnvaps"
 #define MIUI_BUILD_A     "<sndnvaps@gmail.com>"
@@ -184,7 +184,8 @@ typedef struct  {
   char  text_ok[64];          // OK
   char  text_next[64];        // Next >
   char  text_back[64];        // < Back
-  
+  char  text_wait[64];        // Please wait...
+  char  text_wait_sideload[64];   // Please send zip via "adb sideload" ... 
   char  text_yes[64];         // Yes
   char  text_no[64];          // No
   char  text_about[64];       // About

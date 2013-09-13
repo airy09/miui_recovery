@@ -175,6 +175,11 @@ int miui_ui_config(const char * file);
 STATUS miui_ui_start();
 STATUS miui_ui_end();
 
+// adb sideload
+//
+STATUS miui_sideload_process();
+
+
 
 #define assert_ui_if_fail(p) if(!(p)) { \
     miui_alert(2, "<~alert.result>", "<~alert.desc>");}

@@ -34,6 +34,10 @@
 #include "roots.h"
 #include "recovery_ui.h"
 
+#include "sideload.h" //for adb_sideload
+extern "C" {
+#include "minadbd/adb.h"
+} 
 
 extern "C" {
 #include "miui/src/miui.h"
@@ -68,6 +72,8 @@ static const char *CACHE_ROOT = "/cache";
 static const char *SDCARD_ROOT = "/sdcard";
 static const char *TEMPORARY_LOG_FILE = "/tmp/miui_recovery.log";
 static const char *TEMPORARY_INSTALL_FILE = "/tmp/last_install";
+static const char *SIDELOAD_TEMP_DIR = "/tmp/sideload";
+
 
 
 /*
@@ -329,6 +335,99 @@ erase_volume(const char *volume) {
     return format_volume(volume);
 }
 
+
+static char*
+copy_sideloaded_package(const char* original_path) {
+  if (ensure_path_mounted(original_path) != 0) {
+    LOGE("Can't mount %s\n", original_path);
+    return NULL;
+  }
+
+  if (ensure_path_mounted(SIDELOAD_TEMP_DIR) != 0) {
+    LOGE("Can't mount %s\n", SIDELOAD_TEMP_DIR);
+    return NULL;
+  }
+ if (ensure_path_mounted(SIDELOAD_TEMP_DIR) != 0) {
+    LOGE("Can't mount %s\n", SIDELOAD_TEMP_DIR);
+    return NULL;
+  }
+
+  if (mkdir(SIDELOAD_TEMP_DIR, 0700) != 0) {
+    if (errno != EEXIST) {
+      LOGE("Can't mkdir %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
+      return NULL;
+    }
+  }
+
+  // verify that SIDELOAD_TEMP_DIR is exactly what we expect: a
+  // directory, owned by root, readable and writable only by root.
+  struct stat st;
+  if (stat(SIDELOAD_TEMP_DIR, &st) != 0) {
+    LOGE("failed to stat %s (%s)\n", SIDELOAD_TEMP_DIR, strerror(errno));
+    return NULL;
+  }
+  if (!S_ISDIR(st.st_mode)) {
+    LOGE("%s isn't a directory\n", SIDELOAD_TEMP_DIR);
+    return NULL;
+  }
+  if ((st.st_mode & 0777) != 0700) {
+    LOGE("%s has perms %o\n", SIDELOAD_TEMP_DIR, st.st_mode);
+    return NULL;
+  }
+  if (st.st_uid != 0) {
+    LOGE("%s owned by %lu; not root\n", SIDELOAD_TEMP_DIR, st.st_uid);
+    return NULL;
+  }
+  char copy_path[PATH_MAX];
+  strcpy(copy_path, SIDELOAD_TEMP_DIR);
+  strcat(copy_path, "/package.zip");
+
+  char* buffer = (char*)malloc(BUFSIZ);
+  if (buffer == NULL) {
+    LOGE("Failed to allocate buffer\n");
+    return NULL;
+  }
+
+  size_t read;
+  FILE* fin = fopen(original_path, "rb");
+  if (fin == NULL) {
+    LOGE("Failed to open %s (%s)\n", original_path, strerror(errno));
+    return NULL;
+  }
+  FILE* fout = fopen(copy_path, "wb");
+  if (fout == NULL) {
+    LOGE("Failed to open %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+
+  while ((read = fread(buffer, 1, BUFSIZ, fin)) > 0) {
+    if (fwrite(buffer, 1, read, fout) != read) {
+      LOGE("Short write of %s (%s)\n", copy_path, strerror(errno));
+      return NULL;
+    }
+  }
+  free(buffer);
+
+  if (fclose(fout) != 0) {
+    LOGE("Failed to close %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+
+  if (fclose(fin) != 0) {
+    LOGE("Failed to close %s (%s)\n", original_path, strerror(errno));
+    return NULL;
+  }
+
+  // "adb push" is happy to overwrite read-only files when it's
+  // running as root, but we'll try anyway.
+  if (chmod(copy_path, 0400) != 0) {
+    LOGE("Failed to chmod %s (%s)\n", copy_path, strerror(errno));
+    return NULL;
+  }
+
+  return strdup(copy_path);
+}
+
 /*
  * for register intent for ui send intent to some operation
  */
@@ -531,9 +630,23 @@ static intentResult* intent_backup_format(int argc, char *argv[]) {
 	return miuiIntent_result_set(0, NULL);
 }
 
+//INTENT_SIDELOAD install_file
+//
+static intentResult* intent_sideload(int argc, char* argv[])
+{
+	return_intent_result_if_fail(argc == 1);
+	struct stat st;
+	char install_file[255];
+	//strcpy(install_file, ADB_SIDELOAD_FILENAME);
 
+	//if (stat(install_file,&st) == 0) {
+	      return miuiIntent_result_set(start_adb_sideload(),NULL);
+//	} else {
+//		printf("Error in adb sideload\n");
+//	}
 
-
+   // return miuiIntent_result_set(0, NULL);
+}
 
 
 
@@ -574,6 +687,13 @@ static void setup_adbd() {
 }
 
 int main(int argc, char **argv) {
+
+        //for adb sideload 
+	if (argc == 2 && strcmp(argv[1], "--adbd") == 0) {
+		adb_main();
+		return 0;
+	}
+
        
         if (strcmp(basename(argv[0]), "recovery") != 0) {
 		if (strstr(argv[0], "dedupe") != NULL){
@@ -629,6 +749,7 @@ int main(int argc, char **argv) {
     miuiIntent_register(INTENT_ROOT, &intent_root);
     miuiIntent_register(INTENT_RUN_ORS, &intent_run_ors);
     miuiIntent_register(INTENT_BACKUP_FORMAT, &intent_backup_format);
+    miuiIntent_register(INTENT_SIDELOAD, &intent_sideload);
 
     device_ui_init();
     load_volume_table();

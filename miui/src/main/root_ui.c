@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <libgen.h>
 
 #include "../miui_inter.h"
 #include "../miui.h"
@@ -40,6 +41,9 @@
 
 #include "../libs/miui_screen.h"
 #include "../libs/miui_libs.h"
+
+#include "../../../minadbd/adb.h" //for ADB_SIDELOAD_FILENAME 
+#include "../../../sideload.h"
 
 #define ROOT_DEVICE 0x8
 #define DISABLE_OFFICAL_REC 0x9
@@ -229,6 +233,26 @@ static STATUS about_author_menu_show(menuUnit* p) {
 	 miui_textbox(p->name, p->title_name, p->icon, miui_readfromfs(file_name));
 	 return MENU_BACK;
 }
+
+
+//for adb sideload functions
+//
+static STATUS sideload_menu_show(struct _menuUnit *p) {
+	miui_sideload_process();
+	miuiIntent_send(INTENT_SIDELOAD, 1, NULL);
+	if (RET_YES == miui_confirm(3, p->name, p->desc, p->icon)) {
+		miuiIntent_send(INTENT_INSTALL, 3, "/tmp/update.zip", "0", "1");
+	}
+
+	char cmd[1024];
+	snprintf(cmd, 1024, "%s", "rm -rf /tmp/update.zip");
+	miuiIntent_send(INTENT_SYSTEM, 1, cmd);
+	return MENU_BACK;
+}
+
+
+
+
 /*
 //refresh_md5_check_state();
 int is_md5_enabled() {
@@ -440,7 +464,17 @@ struct _menuUnit* root_ui_init() {
 	tmp->result = DISABLE_OFFICAL_REC;
 	tmp->show = &root_device_item_show;
 	assert_if_fail(menuNode_add(p, tmp) == RET_OK);
-           
+          
+
+         // adb sideload 
+	 tmp = common_ui_init();
+	 menuUnit_set_name(tmp, "<~tool.sideload.name>"); 
+         menuUnit_set_icon(tmp, "@alert");
+         menuUnit_set_show(tmp, &sideload_menu_show);
+         menuUnit_set_desc(tmp, "<~tool.sideload.desc>");
+         assert_if_fail(menuNode_add(p, tmp) == RET_OK);
+	 
+
 	//Free the sdcard space 
 	tmp = common_ui_init();
 	return_null_if_fail(tmp != NULL);

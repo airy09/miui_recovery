@@ -165,7 +165,7 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
             miuiInstall_set_info(str);
         } 
         else {
-#if 0
+#if 0 
             snprintf(tmpbuf, 255, "%s", command);
 	        miuiInstall_set_text(tmpbuf);
             char* str = strtok(NULL, "\n");
