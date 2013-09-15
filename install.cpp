@@ -40,6 +40,7 @@ extern "C" {
 
 
 #define ASSUMED_UPDATE_BINARY_NAME  "META-INF/com/google/android/update-binary"
+#define ASSUMED_UPDATE_SCRIPT_NAME  "META-INF/com/google/android/update-script"
 #define PUBLIC_KEYS_FILE "/res/keys"
 
 
@@ -50,8 +51,18 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
     const ZipEntry* binary_entry =
             mzFindZipEntry(zip, ASSUMED_UPDATE_BINARY_NAME);
     if (binary_entry == NULL) {
+	    const ZipEntry* update_script_entry = 
+		    mzFindZipEntry(zip, ASSUMED_UPDATE_SCRIPT_NAME);
+	    if (update_script_entry != NULL) {
+		     ui_print("Amend scripting (update-script) is no longer supported.\n");
+            ui_print("Amend scripting was deprecated by Google in Android 1.5.\n");
+            ui_print("It was necessary to remove it when upgrading to the ClockworkMod 3.0 Gingerbread based recovery.\n");
+            ui_print("Please switch to Edify scripting (updater-script and update-binary) to create working update zip packages.\n");
+            return INSTALL_ERROR;
+        }
+
         mzCloseZipArchive(zip);
-        return INSTALL_CORRUPT;
+        return INSTALL_ERROR;
     }
 
     char* binary = "/tmp/update_binary";
@@ -68,11 +79,13 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
 
     if (!ok) {
         LOGE("Can't copy %s\n", ASSUMED_UPDATE_BINARY_NAME);
+	mzCloseZipArchive(zip);
         return INSTALL_ERROR;
     }
 
     int pipefd[2];
     pipe(pipefd);
+    char tmpbuf[256];
 
     // When executing the update binary contained in the package, the
     // arguments passed are:
@@ -115,14 +128,10 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
     sprintf(args[2], "%d", pipefd[1]);
     args[3] = (char*)path;
     args[4] = NULL;
-    char tmpbuf[256];
 
     pid_t pid = fork();
     if (pid == 0) {
-
-        dup2(pipefd[1], STDOUT_FILENO);
-        dup2(pipefd[1], STDERR_FILENO);
-
+	setenv("UPDATE_PACKAGE", path, 1);
         close(pipefd[0]);
         execv(binary, args);
         //fprintf(stdout, "E:Can't run %s (%s)\n", binary, strerror(errno));
@@ -183,10 +192,12 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
     fclose(from_child);
 
     int status;
+    
     waitpid(pid, &status, 0);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
         LOGE("Error in %s\n(Status %d)\n", path, WEXITSTATUS(status));
         snprintf(tmpbuf, 255, "<#selectbg_g><b>Error in%s\n(Status %d)\n</b></#>", path, WEXITSTATUS(status));
+	mzCloseZipArchive(zip);
         miuiInstall_set_text(tmpbuf);
         return INSTALL_ERROR;
     }

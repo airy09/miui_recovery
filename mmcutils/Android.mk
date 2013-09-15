@@ -12,5 +12,17 @@ LOCAL_MODULE_TAGS := eng
 
 include $(BUILD_SHARED_LIBRARY)
 
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	mmcutils.c
+
+LOCAL_MODULE := libmmcutils_static
+LOCAL_MODULE_TAGS := eng
+
+include $(BUILD_STATIC_LIBRARY)
+
+
+
 endif	# TARGET_ARCH == arm
 endif	# !TARGET_SIMULATOR

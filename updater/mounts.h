@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINZIP_INLINE_MAGIC_H_
-#define MINZIP_INLINE_MAGIC_H_
+#ifndef MTDUTILS_MOUNTS_H_
+#define MTDUTILS_MOUNTS_H_
 
-#ifndef MINZIP_GENERATE_INLINES
-#define INLINE extern inline __attribute((__gnu_inline__))
-#else
-#define INLINE
-#endif
+typedef struct {
+ const char *device;
+ const char *mount_point;
+ const char *filesystem;
+ const char *flags;
+} MountedVolume;
 
-#endif  // MINZIP_INLINE_MAGIC_H_
+int scan_mounted_volumes(void);
+
+const MountedVolume *find_mounted_volume_by_device(const char *device);
+
+const MountedVolume *
+find_mounted_volume_by_mount_point(const char *mount_point);
+
+int unmount_mounted_volume(const MountedVolume *volume);
+
+int remount_read_only(const MountedVolume* volume);
+
+#endif  // MTDUTILS_MOUNTS_H_

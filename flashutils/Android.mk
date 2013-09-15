@@ -22,6 +22,27 @@ $(foreach board_define,$(BOARD_RECOVERY_DEFINES), \
 #include $(BUILD_STATIC_LIBRARY)
 include $(BUILD_SHARED_LIBRARY)
 
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := flashutils.c
+LOCAL_MODULE := libflashutils_static
+LOCAL_MODULE_TAGS := optional
+LOCAL_C_INCLUDES += src
+#LOCAL_STATIC_LIBRARIES := libmmcutils libmtdutils libbmlutils libcrecovery
+LOCAL_SHARED_LIBRARIES := libmmcutils libmtdutils libbmlutils 
+LOCAL_STATIC_LIBRARIES := libcrecovery
+BOARD_RECOVERY_DEFINES := BOARD_BML_BOOT BOARD_BML_RECOVERY
+
+$(foreach board_define,$(BOARD_RECOVERY_DEFINES), \
+  $(if $($(board_define)), \
+    $(eval LOCAL_CFLAGS += -D$(board_define)=\"$($(board_define))\") \
+  ) \
+  )
+
+include $(BUILD_STATIC_LIBRARY)
+#include $(BUILD_SHARED_LIBRARY)
+
+
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := flash_image.c
 LOCAL_MODULE := flash_image
