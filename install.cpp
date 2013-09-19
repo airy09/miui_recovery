@@ -43,7 +43,7 @@ extern "C" {
 #define ASSUMED_UPDATE_SCRIPT_NAME  "META-INF/com/google/android/update-script"
 #define PUBLIC_KEYS_FILE "/res/keys"
 
-
+#define UPDATER_API_VERSION 3 // this should equal RECOVERY_API_VERSION , define in Android.mk 
 
 // If the package contains an update binary, extract it and run it.
 static int
@@ -123,7 +123,8 @@ try_update_binary(const char *path, ZipArchive *zip, int* wipe_cache) {
 
     char** args = (char**)malloc(sizeof(char*) * 5);
     args[0] = binary;
-    args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
+    //args[1] = EXPAND(RECOVERY_API_VERSION);   // defined in Android.mk
+    args[1] = (char*)EXPAND(UPDATER_API_VERSION);
     args[2] = (char*)malloc(10);
     sprintf(args[2], "%d", pipefd[1]);
     args[3] = (char*)path;

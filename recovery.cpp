@@ -50,6 +50,7 @@ extern "C" {
 #include "libcrecovery/common.h"
 #include "yaffs2_static/mkyaffs2image.h"
 #include "yaffs2_static/unyaffs.h"
+#include "flashutils/flashutils.h"
 }
 
 #include "nandroid.h"
@@ -688,6 +689,53 @@ static void setup_adbd() {
 	property_set("service.adb.root", "1");
 }
 
+
+
+void write_fstab_root(char *path, FILE *file)
+{
+    Volume *vol = volume_for_path(path);
+    if (vol == NULL) {
+        LOGW("Unable to get recovery.fstab info for %s during fstab generation!\n", path);
+        return;
+    }
+
+    char device[200];
+    if (vol->device[0] != '/')
+        get_partition_device(vol->device, device);
+    else
+        strcpy(device, vol->device);
+
+    fprintf(file, "%s ", device);
+    fprintf(file, "%s ", path);
+    // special case rfs cause auto will mount it as vfat on samsung.
+    fprintf(file, "%s rw\n", vol->fs_type2 != NULL && strcmp(vol->fs_type, "rfs") != 0 ? "auto" : vol->fs_type);
+}
+
+void create_fstab()
+{
+    struct stat info;
+    __system("touch /etc/mtab");
+    FILE *file = fopen("/etc/fstab", "w");
+    if (file == NULL) {
+        LOGW("Unable to create /etc/fstab!\n");
+        return;
+    }
+    Volume *vol = volume_for_path("/boot");
+    if (NULL != vol && strcmp(vol->fs_type, "mtd") != 0 && strcmp(vol->fs_type, "emmc") != 0 && strcmp(vol->fs_type, "bml") != 0)
+         write_fstab_root("/boot", file);
+    write_fstab_root("/cache", file);
+    write_fstab_root("/data", file);
+    write_fstab_root("/datadata", file);
+    write_fstab_root("/emmc", file);
+    write_fstab_root("/system", file);
+    write_fstab_root("/sdcard", file);
+    write_fstab_root("/sd-ext", file);
+    write_fstab_root("/external_sd", file);
+    fclose(file);
+    LOGI("Completed outputting fstab.\n");
+}
+
+
 int main(int argc, char **argv) {
 
         //for adb sideload 
@@ -755,6 +803,7 @@ int main(int argc, char **argv) {
 
     device_ui_init();
     load_volume_table();
+    create_fstab();
     get_args(&argc, &argv);
 
     struct bootloader_message boot;

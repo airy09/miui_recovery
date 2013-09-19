@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "wrong updater binary API; expected 1, 2, or 3; "
                         "got %s\n",
                 argv[1]);
+	//printf("Wrong updater binary API; expected 1, 2, or 3; we just got '%s' \n",argv[1]);
         return 2;
     }
 
