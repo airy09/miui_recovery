@@ -32,14 +32,14 @@ typedef int u32;
 
 #define MIUI_NAME        "MIUI Rec by  LaoYang"
 //rom_version
-#define MIUI_VERSION     "v3.0.0"
+#define MIUI_VERSION     "v3.1.0"
 //rom date
-#define MIUI_BUILD       "2013-09-13"
-#define MIUI_BUILD_CN    "Friday"
+#define MIUI_BUILD       "2013-09-19"
+#define MIUI_BUILD_CN    "Thusday"
 #define MIUI_BUILD_L     "sndnvaps"
 #define MIUI_BUILD_A     "<sndnvaps@gmail.com>"
-#define MIUI_BUILD_URL   "http://www.micode.net/"
-#define MIUI_COPY        "(c) 2012 by xiaomi MIUI developers"
+#define MIUI_BUILD_URL   "http://www.gaojiquan.com/"
+#define MIUI_COPY        "(c) 2013 by Gaojiquan GTO LaoYang"
 
 //-- Temporary Dir - Move from /tmp/miui-data to /tmp/miui symlink to /tmp/miui-data for backward compatibility
 #define MIUI_SYSTMP      "/tmp"
