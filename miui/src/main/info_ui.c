@@ -37,17 +37,19 @@ STATUS info_log_show(struct _menuUnit* p)
 
 STATUS info_about_show(struct _menuUnit* p)
 {
-    char message[512];
-    snprintf(message, 512,
+    char message[1024];
+    snprintf(message, 1024,
     "<~about.name>\n   <b><#selectbg_g>%s</#></b>\n"
     "<~about.version>\n  <b><#selectbg_g>%s</#></b>\n"
     "<~about.device>\n  <b><#selectbg_g>%s</#></b>\n"
     "<~about.date>\n  <b><#selectbg_g>%s</#></b>\n"
+    "<~about.author>\n <b><#selectbg_g>%s</#></b>\n"
     ,
     acfg()->rom_name,
     acfg()->rom_version,
     acfg()->rom_device,
-    acfg()->rom_date
+    acfg()->rom_date,
+    acfg()->rom_author
     );
 
     miui_aboutmenu(

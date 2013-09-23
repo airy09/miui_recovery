@@ -111,11 +111,11 @@ int start_adb_sideload() {
         _exit(-1);
     }
 
-       /*
+       
        char child_prop[PROPERTY_VALUE_MAX];
        sprintf(child_prop, "%i", child);
        property_set("miui_child_pid", child_prop);
-      */
+      
     int status;
     waitpid(child, &status, 0);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {

@@ -120,6 +120,7 @@ about.device=Device:
 about.name=Name:
 about.version=Version:
 about.date=Date:
+about.author=Rec Author:
 
 root.name=LaoYang toolbox
 root.title=Advantage toolbox 

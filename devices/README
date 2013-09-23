@@ -1,0 +1,19 @@
+This folder hold the device config for 
+samsung D720 (nexus 4g)
+zte N909
+honor
+ville
+
+
+#Not support for other device.
+if you want to add your device 
+
+You shoud add some line to Android.mk
+
+Just like it :
+
+<code>
+ else ifeq ($(TARGET_PRODUCT), you_device_name)
+           LOCAL_SRC_FILES := you_device_folder/device.conf | init.conf 
+</code>
+
